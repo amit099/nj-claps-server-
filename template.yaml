@@ -1,0 +1,50 @@
+# <rootDir>/template.yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Size Matters image compression pipeline
+
+Parameters:
+  UncompressedBucketName:
+    Type: String
+    Description: "Bucket for storing full resolution images"
+
+  CompressedBucketName:
+    Type: String
+    Description: "Bucket for storing compressed images"
+
+Resources:
+  UncompressedBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref squareserverbucket
+
+  CompressedBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref squareserverbucket
+
+  ImageCompressorLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/index.handler
+      Runtime: nodejs14.x
+      MemorySize: 1536
+      Timeout: 60
+      Environment:
+        Variables:
+          UNCOMPRESSED_BUCKET: !Ref squareserverbucket
+          COMPRESSED_BUCKET: !Ref squareserverbucket
+      Policies:
+        - S3ReadPolicy:
+           BucketName: !Ref squareserverbucket
+        - S3WritePolicy:
+            BucketName: !Ref squareserverbucket
+      Events:
+        CompressImageEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref squareserverbucket
+            Events: s3:ObjectCreated:*
+
+
+
